@@ -1,0 +1,9 @@
+anthropic
+fastapi
+uvicorn
+mysql-connector-python
+python-dotenv
+pydantic
+ruff
+httpx
+beautifulsoup4
