@@ -2,7 +2,7 @@
 
 A FastAPI backend for a personal AI-powered job search agent. Scrapes curated company career pages, stores structured job data in MySQL, and exposes a REST API consumed by the frontend. Claude integration for resume tailoring and match scoring is stubbed and ready for the next phase.
 
-> **This is the backend repo.** The frontend (React/TypeScript/Vite) lives in a separate repository: **job-search-agent-frontend**
+> **This is the backend repo.** The frontend (React/TypeScript/Vite) lives in a separate repository: [**job-search-agent-frontend**](https://github.com/got2betru24/job-search-agent-frontend)
 
 ---
 

@@ -22,6 +22,7 @@ services:
       - DB_PASSWORD=${DB_PASSWORD}
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost}
+      - SCRAPER_SERVICE_URL=${SCRAPER_SERVICE_URL:-http://job-search-agent-scraper:9000}
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.job-search-agent-api.rule=Host(`job-search-agent.local`) && PathPrefix(`/api`)"

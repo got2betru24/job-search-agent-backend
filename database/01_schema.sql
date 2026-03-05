@@ -23,6 +23,10 @@ CREATE TABLE IF NOT EXISTS sources (
     -- Applied to job title during scrape. NULL means accept all titles.
     filters         JSON            DEFAULT NULL,
 
+    -- Explicit extractor override. NULL = auto-detect from URL.
+    -- Valid values: greenhouse, lever, ashby, bamboohr, workday, phenom, generic
+    extractor_type  VARCHAR(50)     DEFAULT NULL,
+
     -- Rendering hint for the scraper service
     requires_js     BOOLEAN         NOT NULL DEFAULT FALSE,
 
@@ -48,7 +52,7 @@ CREATE TABLE IF NOT EXISTS jobs (
 
     -- Pass 2 fields — populated after full page scrape
     company         VARCHAR(100)    DEFAULT NULL,
-    location        VARCHAR(150)    DEFAULT NULL,
+    location        VARCHAR(500)    DEFAULT NULL,
     job_type        VARCHAR(50)     DEFAULT NULL,      -- full-time, contract, etc.
     salary          VARCHAR(100)    DEFAULT NULL,
     description     LONGTEXT        DEFAULT NULL,
@@ -131,7 +135,7 @@ CREATE TABLE IF NOT EXISTS scrape_log (
     finished_at     DATETIME        DEFAULT NULL,
 
     -- overall run outcome
-    status          ENUM('running', 'success', 'failed', 'partial') NOT NULL DEFAULT 'running',
+    status          ENUM('running', 'success', 'failed', 'partial', 'skipped') NOT NULL DEFAULT 'running',
 
     jobs_found      SMALLINT UNSIGNED DEFAULT 0,   -- titles discovered on listing page
     jobs_added      SMALLINT UNSIGNED DEFAULT 0,   -- net new jobs written to DB
