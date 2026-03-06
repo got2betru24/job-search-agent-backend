@@ -23,6 +23,7 @@ SCRAPER_URL = os.getenv("SCRAPER_SERVICE_URL", "http://job-search-agent-scraper:
 async def _call_scraper(path: str) -> dict:
     """Forward a POST request to the scraper service."""
     import logging
+
     logger = logging.getLogger(__name__)
     try:
         async with httpx.AsyncClient(timeout=300.0) as client:
@@ -39,23 +40,19 @@ async def _call_scraper(path: str) -> dict:
 async def run_scrape(background_tasks: BackgroundTasks):
     """Trigger a scrape run across all active sources."""
     background_tasks.add_task(_call_scraper, "/run")
-    return { "status": "started" }
+    return {"status": "started"}
 
 
 @router.post("/run/{source_id}", status_code=202)
-async def run_scrape_source(source_id: int, background_tasks: BackgroundTasks):
+async def run_scrape_source(source_id: int):
     """Trigger a scrape run for a single source."""
-    background_tasks.add_task(_call_scraper, f"/run/{source_id}")
-    return { "status": "started", "source_id": source_id }
+    return await _call_scraper(f"/run/{source_id}")
 
 
 @router.get("/logs", response_model=List[ScrapeLogResponse])
 async def list_scrape_logs(limit: int = 50):
     """Return recent scrape log entries."""
     with get_cursor() as cursor:
-        cursor.execute(
-            "SELECT * FROM scrape_log ORDER BY started_at DESC LIMIT %s",
-            (limit,)
-        )
+        cursor.execute("SELECT * FROM scrape_log ORDER BY started_at DESC LIMIT %s", (limit,))
         rows = cursor.fetchall()
     return rows
