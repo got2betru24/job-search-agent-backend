@@ -10,8 +10,8 @@ can reach it via the shared traefik-network.
 
 import os
 import httpx
-from fastapi import APIRouter, HTTPException, BackgroundTasks
-from typing import List
+from fastapi import APIRouter, HTTPException, BackgroundTasks, Query
+from typing import List, Optional
 from app.models import ScrapeLogResponse
 from app.database import get_cursor
 
@@ -56,3 +56,37 @@ async def list_scrape_logs(limit: int = 50):
         cursor.execute("SELECT * FROM scrape_log ORDER BY started_at DESC LIMIT %s", (limit,))
         rows = cursor.fetchall()
     return rows
+
+
+@router.get("/logs/raw")
+async def get_raw_logs(
+    source: Optional[str] = Query(None),
+    level: Optional[str] = Query(None),
+    filter_type: Optional[str] = Query(None),
+    limit: int = Query(2000),
+):
+    """Proxy raw log lines from the scraper service."""
+    import logging
+
+    logger = logging.getLogger(__name__)
+    params = {}
+    if source:
+        params["source"] = source
+    if level:
+        params["level"] = level
+    if filter_type:
+        params["filter_type"] = filter_type
+    if limit:
+        params["limit"] = limit
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0) as client:
+            response = await client.get(f"{SCRAPER_URL}/logs/raw", params=params)
+            response.raise_for_status()
+            return response.json()
+    except httpx.HTTPStatusError as e:
+        logger.error(f"Scraper log fetch error {e.response.status_code}: {e}")
+        raise HTTPException(status_code=502, detail="Scraper service returned an error")
+    except httpx.RequestError as e:
+        logger.error(f"Scraper service unavailable: {e}")
+        raise HTTPException(status_code=503, detail="Scraper service unavailable")
