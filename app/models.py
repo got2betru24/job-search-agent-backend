@@ -56,13 +56,14 @@ class SourceBase(BaseModel):
     company:        str
     url:            str
     active:         bool                    = True
+    extractor_type: Optional[str]           = None
     filters:        Optional[List[str]]     = None
     requires_js:    bool                    = False
 
 class SourceResponse(SourceBase):
-    id:             int
+    id:              int
     last_scraped_at: Optional[datetime]     = None
-    created_at:     datetime
+    created_at:      datetime
 
     class Config:
         from_attributes = True
