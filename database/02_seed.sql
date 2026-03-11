@@ -9,36 +9,23 @@
 
 -- ============================================================
 -- Title filters
--- Applied to every source. Lowercase keyword strings.
--- A job title must match at least one filter to be promoted.
--- Filters are case-insensitive substring matches unless the
--- value starts with ^ in which case it is treated as regex.
---
--- Current filters target:
---   - Engineering Manager roles
---   - Product Manager roles
---   - Senior/Staff/Principal individual contributor roles
+-- Previously used a per-source JSON allowlist of regex patterns.
+-- Now using a global blocklist via BLOCKED_TITLE_KEYWORDS in .env.
+-- The filters column is kept in the schema but set to NULL.
+-- Role classification and domain gating handled by:
+--   - classify_role() in utils.py  (role type)
+--   - BLOCKED_TITLE_KEYWORDS env var (global blocklist)
+--   - TARGET_DEPARTMENTS env var (department scoping)
 -- ============================================================
 
 -- ── Shared title filters ─────────────────────────────────────
--- Applied to job title during scrape. Regex patterns start with ^
-SET @filters = JSON_ARRAY(
-  '^.*engineering manager.*$',
-  '^.*(manager|mgr)[,\s].*(engineer|tech|cloud|platform|infrastructure|data|machine learning|ml|ai|analytics|software|intelligence|devinfra|ci.cd|system).*$',
-  '^.*(engineer|tech|cloud|platform|infrastructure|data|machine learning|ml|ai|analytics|software|intelligence|devinfra|system).*(manager|mgr).*$',
-  '^.*(sr\.?\s*|senior\s*)(manager|mgr).*(engineer|tech|cloud|platform|infrastructure|data|machine learning|ml|ai|analytics|software|intelligence|devinfra|ci.cd|system).*$',
-  '^.*director.*(engineer|tech|product|data|analytics|platform|cloud|software|architecture|infrastructure|machine learning|ml|ai).*$',
-  '^.*product manager.*$',
-  '^.*(manager|mgr)[,\s].*product.*$',
-  '^.*(senior|staff|principal).*(engineer|developer|architect|data|analytics).*$',
-  '^.*(engineer|developer|architect).*(senior|staff|principal|iv|v|vi|[456]).*$',
-  '^.*tech lead.*$',
-  '^.*lead.*(engineer|developer|architect|software).*$',
-  '^.*(senior|staff|principal|lead).*(data engineer|data scientist|data analyst).*$',
-  '^.*data (engineer|scientist|analyst|manager).*(senior|staff|principal|lead|iv|v|[456]).*$',
-  '^.*(bi|business intelligence).*(engineer|manager|analyst).*$',
-  '^.*analytics engineer.*$'
-);
+-- Previously stored per-source allowlist patterns here.
+-- Now using BLOCKED_TITLE_KEYWORDS env var as a global blocklist instead.
+-- Filters column kept in schema for flexibility but set to NULL.
+-- See .env BLOCKED_TITLE_KEYWORDS for current blocked keywords.
+SET @filters = NULL;
+
+
 
 -- ── Sources ──────────────────────────────────────────────────
 INSERT IGNORE INTO sources (company, url, active, filters, requires_js, extractor_type) VALUES
@@ -92,8 +79,7 @@ INSERT IGNORE INTO sources (company, url, active, filters, requires_js, extracto
   ('Oracle',        'https://eeho.fa.us2.oraclecloud.com/hcmUI/CandidateExperience/en/sites/jobsearch/jobs?locationId=300000000149325&locationLevel=country&selectedCategoriesFacet=300000001917356&selectedPostingDatesFacet=14', TRUE, @filters, FALSE, 'oracle'),
  
  -- ── Eightfold AI ──────────────────────────────────────────
-  ('Netflix',       'https://explore.jobs.netflix.net/careers?query=manager&Teams=Engineering&domain=netflix.com', TRUE, @filters, FALSE, 'netflix'),
-                    'https://explore.jobs.netflix.net/careers?query=manager&Teams=Data%20%26%20Insights&Teams=Engineering&Work%20Type=remote&Region=ucan&domain=netflix.com&sort_by=new'
+  ('Netflix',       'https://explore.jobs.netflix.net/careers?query=manager&Teams=Data%20%26%20Insights&Teams=Engineering&Work%20Type=remote&Region=ucan&domain=netflix.com&sort_by=new', TRUE, @filters, FALSE, 'netflix'),
 
   -- ── Requires JS — skipped until Playwright service is built ──
   ('Apollo',        'https://www.apollographql.com/careers#positions',      TRUE, @filters, TRUE, 'generic'),
